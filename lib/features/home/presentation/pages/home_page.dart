@@ -1,10 +1,10 @@
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter_bloc/flutter_bloc.dart';
 import 'package:weather_location_manager/features/home/data/model/city_model.dart';
-import 'package:weather_location_manager/features/home/data/remote/city_datasource_impl.dart';
-import 'package:weather_location_manager/features/home/presentation/cubit/city_cubit.dart';
-import 'package:weather_location_manager/features/home/presentation/widgets/city_container.dart';
+import 'package:weather_location_manager/features/home/presentation/bloc/city_cubit.dart';
+import 'package:weather_location_manager/features/home/presentation/bloc/city_state.dart';
 import 'package:weather_location_manager/features/home/presentation/widgets/city_dialog.dart';
+import 'package:weather_location_manager/features/home/presentation/widgets/city_item_list.dart';
 
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
@@ -15,109 +15,152 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-  final CityCubit cityCubit = CityCubit();
-  final CityDataSourceImpl cityDatasource = CityDataSourceImpl(Dio());
+  late final listKey = GlobalKey<AnimatedListState>();
 
-  late final AnimationController _controller = AnimationController(
+  late final AnimationController _dialogAnimationController =
+      AnimationController(
     duration: const Duration(milliseconds: 400),
     vsync: this,
   );
 
-
-  late final Animation<Offset> _offsetAnimation =
+  late final Animation<Offset> _dialogOffsetAnimation =
       Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
           .animate(CurvedAnimation(
-    parent: _controller,
+    parent: _dialogAnimationController,
     curve: Curves.linear,
   ));
 
   @override
-  void dispose() {
-    _controller.dispose();
-    super.dispose();
+  void initState() {
+    context.read<CityCubit>().getCities();
+    super.initState();
   }
 
   @override
   Widget build(BuildContext context) {
-    final cities = getCities();
-    return FutureBuilder(
-      future: cities,
-      builder: (context, cities) => Scaffold(
-          appBar: AppBar(
-            title: const Text('Cities'),
-            actions: [
-              IconButton(
-                  icon: const Icon(Icons.add),
-                  onPressed: () => _openCityDialog(cities.data, null)),
-            ],
-          ),
-          body: LayoutBuilder(
-            builder: (context, constraints) {
-              return Padding(
-                padding: const EdgeInsets.all(8.0),
-                child: ListView.builder(
-                    itemCount: cities.data?.length,
-                    itemBuilder: (context, index) {
-                      return Dismissible(
-                        key: Key(cities.data?[index].id ?? ''),
-                        onDismissed: (direction) {
-                          // deleteCity(cities.data?[index].id);
-                        },
-                        child: Column(
-                          children: [
-                            GestureDetector(
-                              onTap: () => _openCityDialog(cities.data, index),
-                              child: CityContainer(
-                                city: cities.data?[index],
-                              ),
-                            ),
-                            const SizedBox(height: 16),
-                          ],
-                        ),
-                      );
-                    }),
-              );
-            },
-          )),
-    );
+    return BlocListener<CityCubit, CityState>(listener: (context, state) {
+      if (state is CitySuccessState) {
+        _info(state.message ?? "", true);
+      } else if (state is CityErrorState) {
+        _info(state.message ?? "", false);
+      }
+    }, child: BlocBuilder<CityCubit, CityState>(builder: (context, state) {
+      if (state is CityLoadingState) {
+        return _loading();
+      } else {
+        return _buildCityList(state.cities ?? []);
+      }
+    }));
   }
 
-  Future<List<CityModel>> getCities() async {
-    final cities = await cityDatasource.getCities();
-    return cities.fold((l) => List.empty(), (r) => r);
+  @override
+  void dispose() {
+    _dialogAnimationController.dispose();
+    super.dispose();
   }
 
-  void _openCityDialog(List<CityModel>? cities, int? index) async {
-    // Start the animation when opening the dialog
-    _controller.reset();
-    _controller.forward();
+  Widget _buildCityList(List<CityModel> cities) {
+    return Scaffold(
+        appBar: AppBar(
+          title: const Text('Cities'),
+          actions: [
+            IconButton(
+                icon: const Icon(Icons.add),
+                onPressed: () => _addCity(CityModel(
+                    city: "Barra Grande",
+                    temperature: "40",
+                    description: "description"))),
+          ],
+        ),
+        body: LayoutBuilder(
+          builder: (context, constraints) {
+            return Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: AnimatedList(
+                  key: listKey,
+                  initialItemCount: cities.length,
+                  itemBuilder: (context, index, animation) {
+                    return CityItemList(
+                        city: cities[index],
+                        animation: animation,
+                        onRemoveTap: () => _removeCity(index),
+                        onDismissed: () => context
+                            .read<CityCubit>()
+                            .deleteCity(cities[index].id ?? ''),
+                        onTap: () => _openCityDialog(index));
+                  }),
+            );
+          },
+        ));
+  }
+
+  void _openCityDialog(int? index) async {
+    _dialogAnimationController.reset();
+    _dialogAnimationController.forward();
+    final cityCubit = context.read<CityCubit>();
+    final cities = cityCubit.state.cities;
 
     if (cities == null) return;
     CityModel? city = await showDialog<CityModel>(
       context: context,
       builder: (BuildContext context) {
         return SlideTransition(
-            position: _offsetAnimation,
-            child: EditCityDialog(city: cities[index ?? 0]));
+            position: _dialogOffsetAnimation,
+            child: EditCityDialog(city: index != null ? cities[index] : null));
       },
     );
 
     if (city != null) {
+      final cityCubit = context.read<CityCubit>();
       if (index != null) {
         cityCubit.updateCity(city);
-        setState(() {
-          cities[index] = city;
-        });
       } else {
-        cityCubit.addCity(city);
-        // animate with new item
+        _addCity(city);
       }
     }
   }
 
-  void _info(String message) async {}
+  void _addCity(CityModel city) {
+    final cityCubit = context.read<CityCubit>();
+    cityCubit.cities.insert(0, city);
+    listKey.currentState?.insertItem(
+      0,
+      duration: const Duration(milliseconds: 500),
+    );
+  }
+
+  void _removeCity(int index) {
+    final cityCubit = context.read<CityCubit>();
+    final removedCity = cityCubit.state.cities?[index];
+    cityCubit.cities.removeAt(index);
+
+    if (removedCity != null) {
+      listKey.currentState?.removeItem(
+        index,
+        (context, animation) => CityItemList(
+          city: removedCity,
+          animation: animation,
+          onRemoveTap: () {},
+          onDismissed: () {},
+          onTap: () {},
+        ),
+        duration: const Duration(milliseconds: 300),
+      );
+
+      // cityCubit.deleteCity(removedCity.id ?? "");
+    }
+  }
+
+  void _info(String message, bool isSuccess) async {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+        content: Text(message),
+        backgroundColor: isSuccess ? Colors.green : Colors.red,
+      ));
+    });
+  }
 
   Widget _loading() {
-    return const CircularProgressIndicator();
+    return const Center(child: CircularProgressIndicator());
   }
 }

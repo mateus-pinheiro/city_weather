@@ -30,6 +30,15 @@ class CityContainerState extends State<CityContainer> {
           CityContainerInfo(
             city: widget.city,
           ),
+          SizedBox(width: 16),
+          GestureDetector(
+            onTap: () => widget.deleteCity!(),
+            child: const Icon(
+              Icons.delete,
+              color: Colors.white,
+              size: 24,
+            ),
+          ),
         ],
       ),
     );
@@ -50,12 +59,18 @@ class CityContainerInfo extends StatelessWidget {
             children: [
               Text(
                 '${city?.city} -',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Text(
                 city?.temperature ?? '',
-                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold),
               ),
             ],
           ),
@@ -71,3 +86,6 @@ class CityContainerInfo extends StatelessWidget {
     );
   }
 }
+
+
+  

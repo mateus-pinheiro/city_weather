@@ -3,7 +3,7 @@ import 'package:weather_location_manager/features/home/data/model/city_model.dar
 
 class EditCityDialog extends StatefulWidget {
   final CityModel? city;
-  const EditCityDialog({super.key, required this.city});
+  const EditCityDialog({super.key, this.city});
 
   @override
   EditCityDialogState createState() => EditCityDialogState();

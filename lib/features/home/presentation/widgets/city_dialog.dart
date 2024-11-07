@@ -47,7 +47,7 @@ class EditCityDialogState extends State<EditCityDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: const Text('Edit City Information'),
+      title: Text(widget.city != null ? 'Edit City Information' : 'Add City Information') ,
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,

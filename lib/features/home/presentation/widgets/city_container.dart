@@ -49,13 +49,13 @@ class CityContainerInfo extends StatelessWidget {
           Row(
             children: [
               Text(
-                '${city?.city} - ',
-                style: const TextStyle(color: Colors.white),
+                '${city?.city} -',
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
               const SizedBox(width: 8),
               Text(
                 city?.temperature ?? '',
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
               ),
             ],
           ),

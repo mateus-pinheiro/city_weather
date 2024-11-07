@@ -6,8 +6,6 @@ import 'package:weather_location_manager/features/home/presentation/cubit/city_c
 import 'package:weather_location_manager/features/home/presentation/widgets/city_container.dart';
 import 'package:weather_location_manager/features/home/presentation/widgets/city_dialog.dart';
 
-const kFadeAnimationDuration = Duration(milliseconds: 1000);
-
 class HomePage extends StatefulWidget {
   const HomePage({super.key});
 
@@ -17,19 +15,20 @@ class HomePage extends StatefulWidget {
 
 class _HomePageState extends State<HomePage>
     with SingleTickerProviderStateMixin {
-
   final CityCubit cityCubit = CityCubit();
   final CityDataSourceImpl cityDatasource = CityDataSourceImpl(Dio());
 
   late final AnimationController _controller = AnimationController(
-    duration: const Duration(seconds: 3),
+    duration: const Duration(milliseconds: 400),
     vsync: this,
   );
+
+
   late final Animation<Offset> _offsetAnimation =
-      Tween<Offset>(begin: const Offset(1.5, 0.0), end: Offset.zero)
+      Tween<Offset>(begin: const Offset(-1, 0), end: Offset.zero)
           .animate(CurvedAnimation(
     parent: _controller,
-    curve: Curves.elasticIn,
+    curve: Curves.linear,
   ));
 
   @override
@@ -49,7 +48,7 @@ class _HomePageState extends State<HomePage>
             actions: [
               IconButton(
                   icon: const Icon(Icons.add),
-                  onPressed: () => _updateCityInfo(cities.data, null)),
+                  onPressed: () => _openCityDialog(cities.data, null)),
             ],
           ),
           body: LayoutBuilder(
@@ -67,7 +66,7 @@ class _HomePageState extends State<HomePage>
                         child: Column(
                           children: [
                             GestureDetector(
-                              onTap: () => _updateCityInfo(cities.data, index),
+                              onTap: () => _openCityDialog(cities.data, index),
                               child: CityContainer(
                                 city: cities.data?[index],
                               ),
@@ -88,9 +87,13 @@ class _HomePageState extends State<HomePage>
     return cities.fold((l) => List.empty(), (r) => r);
   }
 
-  void _updateCityInfo(List<CityModel>? cities, int? index) async {
+  void _openCityDialog(List<CityModel>? cities, int? index) async {
+    // Start the animation when opening the dialog
+    _controller.reset();
+    _controller.forward();
+
     if (cities == null) return;
-    CityModel? updatedCity = await showDialog<CityModel>(
+    CityModel? city = await showDialog<CityModel>(
       context: context,
       builder: (BuildContext context) {
         return SlideTransition(
@@ -99,11 +102,22 @@ class _HomePageState extends State<HomePage>
       },
     );
 
-    // If the user saved changes, update the list
-    if (updatedCity != null) {
-      setState(() {
-        cities[index ?? 0] = updatedCity;
-      });
+    if (city != null) {
+      if (index != null) {
+        cityCubit.updateCity(city);
+        setState(() {
+          cities[index] = city;
+        });
+      } else {
+        cityCubit.addCity(city);
+        // animate with new item
+      }
     }
+  }
+
+  void _info(String message) async {}
+
+  Widget _loading() {
+    return const CircularProgressIndicator();
   }
 }

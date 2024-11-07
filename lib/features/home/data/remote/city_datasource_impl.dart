@@ -59,7 +59,8 @@ class CityDataSourceImpl implements CityDataSource {
   @override
   Future<Either<Exception, CityModel>> updateCity(CityModel city) async {
     try {
-      final response = await dio.put('$kBaseUrl/city/${city.id}', data: city.toJson());
+      final response =
+          await dio.put('$kBaseUrl/city/${city.id}', data: city.toJson());
       final cityUpdated = CityModel.fromJson(response.data);
       return Right(cityUpdated);
     } on DioException catch (e) {

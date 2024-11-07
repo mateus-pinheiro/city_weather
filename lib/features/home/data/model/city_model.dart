@@ -1,18 +1,18 @@
 class CityModel {
-  final DateTime createdAt;
   final String city;
-  final String avatar;
   final String temperature;
   final String description;
-  final String id;
+  final DateTime? createdAt;
+  final String? avatar;
+  final String? id;
 
   CityModel({
-    required this.createdAt,
     required this.city,
-    required this.avatar,
     required this.temperature,
     required this.description,
-    required this.id,
+    this.avatar,
+    this.createdAt,
+    this.id,
   });
 
   factory CityModel.fromJson(Map<String, dynamic> json) {
@@ -28,7 +28,7 @@ class CityModel {
 
   Map<String, dynamic> toJson() {
     return {
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': createdAt?.toIso8601String(),
       'city': city,
       'avatar': avatar,
       'temperature': temperature,

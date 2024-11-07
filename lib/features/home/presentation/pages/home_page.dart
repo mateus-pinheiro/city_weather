@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:lottie/lottie.dart';
 import 'package:weather_location_manager/features/home/data/model/city_model.dart';
 import 'package:weather_location_manager/features/home/presentation/bloc/city_cubit.dart';
 import 'package:weather_location_manager/features/home/presentation/bloc/city_state.dart';
@@ -66,10 +67,7 @@ class _HomePageState extends State<HomePage>
           actions: [
             IconButton(
                 icon: const Icon(Icons.add),
-                onPressed: () => _addCity(CityModel(
-                    city: "Barra Grande",
-                    temperature: "40",
-                    description: "description"))),
+                onPressed: () => _openCityDialog(null)),
           ],
         ),
         body: LayoutBuilder(
@@ -111,17 +109,20 @@ class _HomePageState extends State<HomePage>
     );
 
     if (city != null) {
-      final cityCubit = context.read<CityCubit>();
-      if (index != null) {
-        cityCubit.updateCity(city);
-      } else {
-        _addCity(city);
-      }
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        final cityCubit = context.read<CityCubit>();
+        if (index != null) {
+          cityCubit.updateCity(city);
+        } else {
+          _addCity(city);
+        }
+      });
     }
   }
 
   void _addCity(CityModel city) {
     final cityCubit = context.read<CityCubit>();
+    cityCubit.addCity(city);
     cityCubit.cities.insert(0, city);
     listKey.currentState?.insertItem(
       0,
@@ -147,7 +148,7 @@ class _HomePageState extends State<HomePage>
         duration: const Duration(milliseconds: 300),
       );
 
-      // cityCubit.deleteCity(removedCity.id ?? "");
+      cityCubit.deleteCity(removedCity.id ?? "");
     }
   }
 
@@ -161,6 +162,16 @@ class _HomePageState extends State<HomePage>
   }
 
   Widget _loading() {
-    return const Center(child: CircularProgressIndicator());
+    return Container(
+      color: Colors.white,
+      child: Center(
+        child: Lottie.asset(
+          'assets/animations/splash-animation.json',
+          fit: BoxFit.cover,
+          width: 500,
+          height: 500,
+        ),
+      ),
+    );
   }
 }

@@ -24,7 +24,7 @@ class CityRepositoryImpl implements CityRepository {
   }
 
   @override
-  Future<Either<Exception, bool>> newCity(CityModel city) async {
+  Future<Either<Exception, CityModel>> newCity(CityModel city) async {
     return await cityDataSource.newCity(city);
   }
 

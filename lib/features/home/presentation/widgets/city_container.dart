@@ -30,7 +30,7 @@ class CityContainerState extends State<CityContainer> {
           CityContainerInfo(
             city: widget.city,
           ),
-          SizedBox(width: 16),
+          const SizedBox(width: 16),
           GestureDetector(
             onTap: () => widget.deleteCity!(),
             child: const Icon(

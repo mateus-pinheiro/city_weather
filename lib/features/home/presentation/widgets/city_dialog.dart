@@ -35,6 +35,8 @@ class EditCityDialogState extends State<EditCityDialog> {
 
   void _saveChanges() {
     final updatedCity = CityModel(
+      avatar: widget.city?.avatar ?? '',
+      id: widget.city?.id ?? '',
       city: _cityController.text,
       temperature: _temperatureController.text,
       description: _descriptionController.text,
@@ -47,7 +49,9 @@ class EditCityDialogState extends State<EditCityDialog> {
   @override
   Widget build(BuildContext context) {
     return AlertDialog(
-      title: Text(widget.city != null ? 'Edit City Information' : 'Add City Information') ,
+      title: Text(widget.city != null
+          ? 'Edit City Information'
+          : 'Add City Information'),
       content: SingleChildScrollView(
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -74,7 +78,9 @@ class EditCityDialogState extends State<EditCityDialog> {
         ),
         ElevatedButton(
           onPressed: _saveChanges, // Save changes and close dialog
-          child: widget.city == null ? const Text('Save new city') : const Text('Update'),
+          child: widget.city == null
+              ? const Text('Save new city')
+              : const Text('Update'),
         ),
       ],
     );

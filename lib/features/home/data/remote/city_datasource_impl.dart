@@ -47,10 +47,11 @@ class CityDataSourceImpl implements CityDataSource {
   }
 
   @override
-  Future<Either<Exception, bool>> newCity(CityModel city) async {
+  Future<Either<Exception, CityModel>> newCity(CityModel city) async {
     try {
-      await dio.post('$kBaseUrl/city', data: city.toJson());
-      return const Right(true);
+      final response = await dio.post('$kBaseUrl/city', data: city.toJson());
+      final cityRegistered = CityModel.fromJson(response.data);
+      return Right(cityRegistered);
     } on DioException catch (e) {
       return Left(e);
     }
